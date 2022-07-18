@@ -1,29 +1,20 @@
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 
-/// This is a made-up example. Requests come into the runtime as unicode
-/// strings in json format, which can map to any structure that implements `serde::Deserialize`
-/// The runtime pays no attention to the contents of the request payload.
+// Our Request Structure
 #[derive(Deserialize)]
 struct Request {
     command: String,
 }
 
-/// This is a made-up example of what a response structure may look like.
-/// There is no restriction on what it can be. The runtime requires responses
-/// to be serialized into json. The runtime pays no attention
-/// to the contents of the response payload.
+// Our Response Structure
 #[derive(Serialize)]
 struct Response {
     req_id: String,
     msg: String,
 }
 
-/// This is the main body for the function.
-/// Write your code inside it.
-/// There are some code example in the following URLs:
-/// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/lambda-runtime/examples
-/// - https://github.com/aws-samples/serverless-rust-demo/
+// Our Handler Function
 async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     // Extract some useful info from the request
     let command = event.payload.command;
@@ -47,4 +38,22 @@ async fn main() -> Result<(), Error> {
         .init();
 
     run(service_fn(function_handler)).await
+}
+
+/* Our unit Tests */
+
+#[cfg(test)]
+mod tests {
+    use serde_json;
+    use super::*;
+
+    #[tokio::test]
+    async fn test_handler() {
+        let input = serde_json::from_str("{\"command\": \"test\"}").expect("failed to parse event");
+        let context = lambda_runtime::Context::default();
+        let event = lambda_runtime::LambdaEvent::new(input, context);
+
+        let resp = function_handler(event).await.unwrap();
+        assert_eq!(resp.msg, "Command test.");
+    }
 }
