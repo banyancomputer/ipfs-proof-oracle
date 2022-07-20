@@ -11,7 +11,6 @@ use http::uri::Uri;
 use std::fs;
 use hex::encode;
 use std::str::FromStr;
-// use std::io::prelude::*;
 use std::io::Read;
 use std::io::{Cursor, SeekFrom};
 
