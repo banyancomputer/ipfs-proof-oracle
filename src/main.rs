@@ -13,7 +13,14 @@ use hex::encode;
 use std::str::FromStr;
 use std::io::Read;
 use std::io::{Cursor, SeekFrom};
+use cid::Cid;
+use std::convert::TryFrom;
+use koibumi_base32 as base32;
+use bs58;
 
+// How big File chunks are with Bao
+// TODO: Subject to change, we need to coordinate with bao team.
+pub(crate) const BAO_CHUNK_SIZE: usize = 1024;
 
 // Our Request Structure for our Oracle Function
 #[derive(Deserialize)]
@@ -30,27 +37,49 @@ struct Response {
     req_id: String,
     msg: String
 }
+//
+// fn read_cid(cid_string: &str) -> Result<Cid, Error> {
+//     dbg!("Converting String: ", cid_string);
+//     // If the string starts with "b" it's a base32 encoded CID.
+//     // let mut cid_bytes = Vec::new();
+//     if cid_string.starts_with("b") {
+//         //encode the string as a base32 encoded byte array.
+//         let cid_bytes = base32::encode(cid_string).to_string();
+//         // dbg!("Converted to bytes: ", cid_bytes);
+//         let cid = Cid::try_from(cid_bytes.as_bytes())?;
+//         Ok(cid)
+//     } else {
+//         // Otherwise it's a base 58 encoded CID.
+//         let cid_bytes = bs58::encode(cid_string).into_vec();
+//         let cid = Cid::try_from(cid_bytes.as_bytes())?;
+//         Ok(cid)
+//     }
+// }
 
 // Our Handler Function
 async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     // Extract some useful info from the request
-    let cid = event.payload.cid;
+    let _cid_string = event.payload.cid;
     let host = event.payload.host;
     let port = event.payload.port;
-    let mut blake3_string = event.payload.blake3_hash;
+    let _blake3_string = event.payload.blake3_hash;
 
-    dbg!("CID: {}", &cid);
+    dbg!("CID: {}", &_cid_string);
     dbg!("Host: {}", &host);
     dbg!("Port: {}", &port);
-    dbg!("Blake String: {}", &blake3_string);
+    dbg!("Blake String: {}", &_blake3_string);
+
+    // Read our _cid_string into a Cid object
+    // TODO: How the hell is this supposed to work?
+    let cid = read_cid(&_cid_string)?;
 
     // Determine where the obao file is located based on the blake3 hash
     // This is what I have on my machine. Change to your own path.
-    let obao_path = format!("/home/alex/bao/obao/{}", blake3_string);
+    let obao_path = format!("/home/alex/bao/obao/{}", _blake3_string);
     dbg!("OBAO Path: {}", &obao_path);
 
     // Read the Blake3 hash in as a bao::Hash struct
-    let blake3_hash = bao::Hash::from_str(&blake3_string).unwrap();
+    let blake3_hash = bao::Hash::from_str(&_blake3_string).unwrap();
 
     /*
      *    TODO: Implement initializing client to custom host and port
@@ -73,7 +102,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     // Have our IPFS client request a file based on its CID
     match client
-        .cat(&cid)
+        .cat(&_cid_string) // TODO: Read from CID
         .map_ok(|chunk| chunk.to_vec())
         .try_concat()
         .await
@@ -139,7 +168,7 @@ mod tests {
     async fn test_handler() {
         let input = serde_json::from_str(
             "{\
-                \"cid\": \"QmcBKNB3P2MjsqC5XRomF3JRvz8kW8REMHLsULXfoifECd\",\
+                \"cid\": \"bafkreia5mw7jowpyklbi3cgdhmmsz7ltahcrc7g3obi6vn3huznf4qyuae\",\
                 \"host\": \"127.0.0.1\",\
                 \"port\": 5001,\
                 \"blake3_hash\": \"18d02feb44d03805a6d674468c39ed75d32abf43372c14e8ef2b89a2fd56cd33\"\
