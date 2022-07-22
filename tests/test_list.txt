@@ -1,0 +1,9 @@
+A text file for keeping track of local tests
+/* ========================================================================== */
+
+{
+ "name": "files/ethereum.pdf",
+ "size": "956232" ,
+  "hash": "6ed8644d6b2aba69f8e21c598b8fd4d0f8fd0001d9a481508c971a2db7448303",
+  "cid": "bafybeigiysh5xsklm4hailn25bl6ezshkzmtsewo6vbdwjvrpg7lqhz4ae"
+}

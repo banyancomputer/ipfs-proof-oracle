@@ -10,15 +10,16 @@ use futures::TryStreamExt;
 
 // TODO: Implement these using S3
 // Construct a path to an obao file based on the blake3 hash.
-fn gen_obao_path(hash: &Hash) -> String {
+fn gen_obao_path(obao_path: &str, hash: &Hash) -> String {
     let hash_str = &hash.to_hex();
     dbg!(hash_str);
     // Make sure you have some tests saved here!
-    format!("./obao/{}", hash_str)
+    format!("{}/{}", obao_path, hash_str)
 }
 
 // Read an obao file from your backend and return a Vec<u8> of the file data.
 fn read_obao(obao_path: &str) -> Result<Vec<u8>, Error> {
+    dbg!(obao_path);
     let mut file = std::fs::File::open(obao_path)?;
     let mut obao_bytes = Vec::new();
     file.read_to_end(&mut obao_bytes)?;
@@ -30,12 +31,13 @@ pub struct OracleQuery {
     pub cid: Cid, // The CID of the file to be verified
     pub hash: Hash, // The Blake3 hash of the file to be verified.
     pub file_size: usize, // The size of the file to be verified.
+    pub obao_path: String, // The path to the obao file on the backend.
     pub client: IpfsClient, // The IPFS client to use to retrieve the file.
 }
 
 impl OracleQuery {
     // Generate a new OracleQuery.
-    pub fn new(cid: Cid, hash: Hash, file_size: usize, _host: String, _port: u16) -> Self {
+    pub fn new(cid: Cid, hash: Hash, file_size: usize, obao_path: String, _host: String, _port: u16) -> Self {
         // Initialize our IPFS client from a specified host and port
         let client = IpfsClient::from_host_and_port(
             http::uri::Scheme::HTTP, &_host, _port
@@ -45,6 +47,7 @@ impl OracleQuery {
             cid,
             hash,
             file_size,
+            obao_path,
             client
         }
     }
@@ -62,7 +65,7 @@ impl OracleQuery {
         {
             Ok(res) => {
                 // Read in our obao file from our backend
-                let obao = read_obao(&gen_obao_path(&self.hash))?;
+                let obao = read_obao(&gen_obao_path(&self.obao_path, &self.hash))?;
 
                 /* Todo: Implement using our ObaoSlice struct */
 

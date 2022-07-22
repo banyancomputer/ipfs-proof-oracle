@@ -26,6 +26,7 @@ struct Request {
     file_size: usize, // The size of the file to be verified. Used determine challenge blocks
 
     /* Retrieval meta-data */
+    obao_path: String, // The path to the obao file on the backend.
     host: String, // The IPFS endpoint to use
     port: u16  // The IPFS port to use
 }
@@ -43,6 +44,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
     let _cid_str = event.payload.cid;
     let _blake3_string = event.payload.blake3_hash;
     let _file_size = event.payload.file_size;
+    let obao_path = event.payload.obao_path;
     let _host = event.payload.host;
     let _port = event.payload.port;
     println!("CID: {}", &_cid_str);
@@ -66,16 +68,20 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
     let mut response_msg = String::new();
 
     // Create a new OracleQuery object
-    let query = OracleQuery::new(cid, blake3_hash, _file_size, _host, _port);
+    let query = OracleQuery::new(cid, blake3_hash, _file_size, obao_path, _host, _port);
     // Perform the Oracle Query
     match query.perform().await {
         Ok(res) => {
             // If the query was successful, return a success message
-            response_msg = format!("Valid Proof: {}", res);
-        }
+            if res {
+                response_msg = "Valid proof".to_string();
+            } else {
+                response_msg = "Failed proof".to_string();
+            }
+        },
         Err(err) => {
-            // If the query failed, return a failure message
-            response_msg = format!("Failure: {}", err);
+            // If the query failed, for some reason, return a failure message
+            response_msg = format!("Query Failure: {}", err);
         }
     }
     println!("Response: {}", &response_msg);
@@ -110,22 +116,23 @@ mod tests {
     use super::*;
     use std::sync::Once;
 
+    #[tokio::test]
+    async fn test_handler() {
+        /* Create a dummy request. Use values in tests/test_list.txt */
+        let input = serde_json::from_str(
+            "{\
+                \"cid\": \"bafybeigiysh5xsklm4hailn25bl6ezshkzmtsewo6vbdwjvrpg7lqhz4ae\",\
+                \"blake3_hash\": \"6ed8644d6b2aba69f8e21c598b8fd4d0f8fd0001d9a481508c971a2db7448303\",\
+                \"file_size\": 956232,\
+                \"obao_path\": \"./tests/obao\",\
+                \"host\": \"127.0.0.1\",\
+                \"port\": 5001\
+            }"
+        ).expect("failed to parse event");
+        let context = lambda_runtime::Context::default();
+        let event = lambda_runtime::LambdaEvent::new(input, context);
 
-    // #[tokio::test]
-    // async fn test_handler() {
-    //     let input = serde_json::from_str(
-    //         "{\
-    //             \"cid\": \"bafkreia5mw7jowpyklbi3cgdhmmsz7ltahcrc7g3obi6vn3huznf4qyuae\",\
-    //             \"blake3_hash\": \"18d02feb44d03805a6d674468c39ed75d32abf43372c14e8ef2b89a2fd56cd33\"\
-    //             \"file_length\": 236822,
-    //             \"host\": \"127.0.0.1\",\
-    //             \"port\": 5001,\
-    //         }"
-    //     ).expect("failed to parse event");
-    //     let context = lambda_runtime::Context::default();
-    //     let event = lambda_runtime::LambdaEvent::new(input, context);
-    //
-    //     let resp = function_handler(event).await.unwrap();
-    //     assert_eq!(resp.msg, "valid proof");
-    // }
+        let resp = function_handler(event).await.unwrap();
+        assert_eq!(resp.msg, "Valid proof");
+    }
 }
