@@ -3,3 +3,6 @@
 
 # Our test output file
 output.json
+
+# Don't udate default tests
+tests/*
