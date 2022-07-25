@@ -22,8 +22,8 @@ hex = "0.4.3"
 futures = "0.3.21"
 http = "0.2.8"
 blake3_processing = { git = "https://github.com/banyancomputer/blake3_processing" }
-ipfs-api = "0.15.0"
-ipfs-api-backend-hyper = "0.4"
+ipfs-api = { git = "https://github.com/banyancomputer/rust-ipfs-api" }
+ipfs-api-backend-hyper = { git = "https://github.com/banyancomputer/rust-ipfs-api" }
 lambda_runtime = "0.5.1"
 serde = "1.0.136"
 serde_json = "1.0"
