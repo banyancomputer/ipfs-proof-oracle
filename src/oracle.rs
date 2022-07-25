@@ -70,25 +70,13 @@ impl OracleQuery {
         {
             Ok(chunk) => {
                 /* TODO: Implement reading the obao as a stream */
+
                 // Read in our obao file from our backend
                 let obao = read_obao(&gen_obao_path(&self.obao_path, &self.hash))?;
                 // Create a new ObaoSlice from the retrieved file and our obao file
                 let obao_slice = ObaoSlice::new(obao, &chunk, offset).unwrap();
                 // Verify the file using our ObaoSlice
                 Ok(obao_slice.verify(&self.hash).unwrap())
-
-                // // Decode using our outboard encoding, and read it to the end
-                // let mut decoded = Vec::new();
-                // let mut decoder = bao::decode::Decoder::new_outboard(
-                //     Cursor::new(&res[..]),
-                //     Cursor::new(&obao[..]),
-                //     &self.hash
-                // );
-                // // Read the decoded ObaoSlice into the decoded Vector.
-                // match decoder.read_to_end(&mut decoded) {
-                //     Err(e) => Ok(false),
-                //     _ => Ok(true),
-                // }
             } Err(e) => {
                 Err(anyhow!("error getting file: {}", e))
             }
