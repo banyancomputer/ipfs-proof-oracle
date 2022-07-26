@@ -1,3 +1,4 @@
+# TODO: Replace with Terraform
 source .env
 
 echo "Building docker image..."
