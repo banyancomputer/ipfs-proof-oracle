@@ -22,7 +22,7 @@ mod oracle;
 struct Request {
     /* File meta-data */
     cid: String, // The CID of the file to be verified
-    blake3_hash: String,  // The Blake3 hash of the file to be verified. Used to index the obao file.
+    hash: String,  // The Blake3 hash of the file to be verified. Used to index the obao file.
     file_size: usize, // The size of the file to be verified. Used determine challenge blocks
 
     /* Retrieval meta-data */
@@ -42,13 +42,13 @@ struct Response {
 async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     // Extract some useful info from the request
     let _cid_str = event.payload.cid;
-    let _blake3_string = event.payload.blake3_hash;
+    let _hash_string = event.payload.hash;
     let _file_size = event.payload.file_size;
     let obao_path = event.payload.obao_path;
     let _host = event.payload.host;
     let _port = event.payload.port;
     println!("CID: {}", &_cid_str);
-    println!("Blake3 String: {}", &_blake3_string);
+    println!("Blake3 String: {}", &_hash_string);
     println!("File Size: {}", &_file_size);
     println!("Host: {}", &_host);
     println!("Port: {}", &_port);
@@ -61,7 +61,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
     println!(" - hash: {:?}", &cid.hash());
 
     // Read the Blake3 hash in as a bao::Hash struct
-    let blake3_hash = bao::Hash::from_str(&_blake3_string).unwrap();
+    let blake3_hash = bao::Hash::from_str(&_hash_string).unwrap();
     println!("Blake3 Hash: {}", &blake3_hash.to_string());
 
     // Declare a variable to hold our response message
