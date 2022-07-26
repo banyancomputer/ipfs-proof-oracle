@@ -37,11 +37,13 @@ pub struct Endpoint {
 pub async fn get_meta_data(deal_id: &str) -> Result<MetaData, Error> {
     // Our AWS region
     let region = "us-east-2".parse().unwrap();
-    println!("Retrieving Credentials for S3");
-    let credentials = Credentials::new(None, None, None, None, Some("s3-access"))?;
 
-    println!("Initializing S3 client...");
+    // Your default AWS credentials. These should have access to the S3 buckets.
+    println!("Retrieving Credentials for S3...");
+    let credentials = Credentials::default()?;
+
     // Create a new S3 client
+    println!("Initializing S3 client...");
     let bucket = Bucket::new(META_DATA_BUCKET, region, credentials)?;
     // Create a new S3 GetObjectRequest
     let response = bucket.get_object(deal_id).await?;
