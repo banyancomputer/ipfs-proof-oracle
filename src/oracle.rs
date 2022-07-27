@@ -48,8 +48,8 @@ impl OracleQuery {
         let offset = generate_random_chunk_index(self.size);
         // Retrieve the file from IPFS
         match self.client
-            // Read bytes of a file from IPFS
-            .cat_bytes(
+            // Read the desired chunk from the file
+            .cat_range(
                 &self.cid.to_string(),  // using a CID as a key
                 offset.try_into().unwrap(),  // offset to start reading from
                 BAO_CHUNK_SIZE.try_into().unwrap()  // length to read
@@ -111,7 +111,7 @@ mod tests {
 
     // See if cat_bytes works on a local test on a local IPFS node.
     #[tokio::test]
-    async fn test_cat_bytes() {
+    async fn test_cat_range() {
         let client = IpfsClient::from_host_and_port(
             http::uri::Scheme::HTTP, "localhost", 5001
         ).unwrap();
@@ -122,7 +122,7 @@ mod tests {
                 .try_concat()
                 .await.unwrap();
         let bytes_res =
-            client.cat_bytes(&cid, 0, 10)
+            client.cat_range(&cid, 0, 10)
                 .map_ok(|file_bytes| file_bytes.to_vec())
                 .try_concat()
                 .await.unwrap();
