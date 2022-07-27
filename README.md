@@ -7,6 +7,7 @@
 ## Testing
 The Oracle reads meta-data from S3 in order to verify the integrity of a deal stored under a `dealID`.
 Therefore, any meta-data that a local test requires must be stored in S3. See the repository `oracle_storage` for more information.
+Make sure you have appropriately configured AWS keys in a `.env` file in the root of the repository.
 
 Once the meta-data is stored in S3, the Oracle can be tested locally:
 
