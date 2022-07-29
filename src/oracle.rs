@@ -2,7 +2,7 @@
 
 use cid::{Cid, Error as CidError};
 use bao::Hash;
-use blake3_processing::obao_verifier::{ObaoSlice, generate_random_chunk_index, BAO_CHUNK_SIZE};
+use blake3_processing::obao::slicer::*;
 use ipfs_api::{IpfsApi, IpfsClient, TryFromUri};
 use anyhow::{Result, anyhow, Error};
 use std::io::{Read, Cursor, SeekFrom};
