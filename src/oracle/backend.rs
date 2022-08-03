@@ -1,22 +1,15 @@
-use std::str::FromStr;
-use serde::{Deserialize, Serialize};
-use anyhow::{Result, anyhow, Error};
+use serde::{Deserialize};
+use anyhow::{Result, Error};
 use s3::bucket::Bucket;
 use awsregion::Region;
 use awscreds::Credentials;
-use std::io::Cursor;
 use std::io::Read;
-use std::env;
-use envconfig::Envconfig;
-
-#[macro_use]
-use lazy_static::lazy_static;
 
 // TODO: Make these configurable.
 // Our S3 bucket names
 const META_DATA_BUCKET: &str = "meta-data-bucket-dev-9lz7kptz8kihj7qx";
 const OBAO_FILE_BUCKET: &str = "obao-file-bucket-dev-9lz7kptz8kihj7qx";
-const ENDPOINT_BUCKET: &str = "endpoint-bucket-dev-9lz7kptz8kihj7qx";
+// const ENDPOINT_BUCKET: &str = "endpoint-bucket-dev-9lz7kptz8kihj7qx";
 
 lazy_static! {
     /// Our AWS region
@@ -108,7 +101,7 @@ pub async fn get_meta_data(deal_id: &str) -> Result<MetaData, Error> {
 
 /// Retrieve an OBAO file from S3.
 /// # Arguments
-/// * `cid` - The cid of the file to retrieve an obao file for.
+/// * `hash_str` - The hex string of the file hash to retrieve an obao file for.
 /// # Returns
 /// * A Vec<u8> containing the file if the file exists, or raises an error if it does not.
 /// # Example
@@ -116,7 +109,7 @@ pub async fn get_meta_data(deal_id: &str) -> Result<MetaData, Error> {
 /// use oracle::backend::get_obao_file;
 /// let obao_file = get_obao_file("cid").unwrap();
 /// ```
-pub async fn get_obao_file(cid: &str) -> Result<Vec<u8>, Error> {
+pub async fn get_obao_file(hash_str: &str) -> Result<Vec<u8>, Error> {
     /* TODO: Get around cloning these */
     // Our AWS region
     let region = REGION.clone();
@@ -126,7 +119,7 @@ pub async fn get_obao_file(cid: &str) -> Result<Vec<u8>, Error> {
     // Initialize our S3 bucket
     let bucket = Bucket::new(OBAO_FILE_BUCKET, region, credentials)?;
     // Retrieve the object from S3
-    let response = bucket.get_object(cid).await?;
+    let response = bucket.get_object(hash_str).await?;
     // Read the bytes of the response into a buffer
     let mut reader = response.bytes();
     let mut buffer = Vec::new();

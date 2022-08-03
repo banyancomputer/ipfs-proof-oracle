@@ -1,17 +1,15 @@
 /* uses */
-use cid::{Cid, Error as CidError};
 use bao::Hash;
+use cid::Cid;
 use blake3_processing::obao::slicer::*;
 use ipfs_api::{IpfsApi, IpfsClient, TryFromUri};
 use anyhow::{Result, anyhow, Error};
-use std::io::{Read, Cursor, SeekFrom};
 use futures::TryStreamExt;
 use std::str::FromStr;
-use std::env;
-use std::envconfig::Envconfig;
+use envconfig::Envconfig;
 use crate::oracle::backend::{
     get_meta_data, MetaData,
-    get_endpoint, Endpoint,
+    // get_endpoint, Endpoint,
     get_obao_file,
 };
 
@@ -38,10 +36,10 @@ struct OracleQueryConfig {
 impl OracleQuery {
     // Generate a new OracleQuery.
     pub fn new(cid: Cid, hash: Hash, size: usize) -> Self {
-        let config = OracleQueryConfig::init().unwrap();
+        let config = OracleQueryConfig::init_from_env().unwrap();
         // Initialize our IPFS client from a specified host and port
         let client = IpfsClient::from_host_and_port(
-            http::uri::Scheme::HTTP, config.host, config.port
+            http::uri::Scheme::HTTP, &config.host, config.port
         ).unwrap();
 
         Self {
@@ -73,7 +71,7 @@ impl OracleQuery {
             Ok(chunk) => {
                 /* TODO: Implement reading the obao as a stream */
                 // Read in our obao file from our backend
-                let obao = get_obao_file(&self.cid.to_string()).await?;
+                let obao = get_obao_file(&self.hash.to_hex()).await?;
                 // Create a new ObaoSlice from the retrieved file and our obao file
                 let obao_slice = ObaoSlice::new(obao, &chunk, offset).unwrap();
                 // Verify the file using our ObaoSlice
@@ -93,7 +91,7 @@ pub async fn get_oracle_query(cid: &str) -> Result<OracleQuery, Error> {
     println!("Retrieving Query data from cid: {}", cid);
     // Read our meta-data from S3
     println!("Retrieving meta-data from S3");
-    let meta_data = get_meta_data(deal_id).await?;
+    let meta_data: MetaData = get_meta_data(cid).await?;
     println!("CID: {}", &meta_data.cid);
     println!("Blake3 String: {}", &meta_data.hash);
     println!("File Size: {}", &meta_data.size);

@@ -1,14 +1,9 @@
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
-use futures::TryStreamExt;
-use std::io::{self, Write};
-use std::fs;
-use hex::encode;
-use std::io::{Read, Cursor, SeekFrom};
-use std::convert::TryFrom;
-use std::process::exit;
-use futures::StreamExt;
 use crate::oracle::OracleQuery;
+
+#[macro_use]
+extern crate lazy_static;
 
 mod oracle;
 
@@ -35,7 +30,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
     let query: OracleQuery  = oracle::get_oracle_query(&_cid).await?;
 
     // Declare a variable to hold our response message
-    let mut response_msg = String::new();
+    let response_msg;
     // Perform the Oracle Query
     match query.perform().await {
         Ok(res) => {
@@ -81,7 +76,6 @@ async fn main() -> Result<(), Error> {
 mod tests {
     use serde_json;
     use super::*;
-    use std::sync::Once;
 
     #[tokio::test]
     async fn test_handler() {
