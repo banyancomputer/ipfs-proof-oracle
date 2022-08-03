@@ -1,5 +1,4 @@
 /target
-.env
 
 # Our test output file
 output.json

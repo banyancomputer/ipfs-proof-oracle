@@ -4,10 +4,13 @@
 > It utilizes Blake3 files based on the `bao` format in order to verify the 
 > integrity of challenge blocks requested from the network.
 
+## Configuration
+You need to set an Endpoint for the proof oracle. See .env for a default configuration.
+You also need to export valid credentials for S3 before running the oracle in your enviroment.
+
 ## Testing
-The Oracle reads meta-data from S3 in order to verify the integrity of a deal stored under a `dealID`.
+The Oracle reads meta-data from S3 in order to verify the integrity of a deal stored under a `cid`.
 Therefore, any meta-data that a local test requires must be stored in S3. See the repository `oracle_storage` for more information.
-Make sure you have appropriately configured AWS keys in a `.env` file in the root of the repository.
 
 Once the meta-data is stored in S3, the Oracle can be tested locally:
 
