@@ -1,5 +1,4 @@
 /* uses */
-
 use cid::{Cid, Error as CidError};
 use bao::Hash;
 use blake3_processing::obao::slicer::*;
@@ -8,6 +7,8 @@ use anyhow::{Result, anyhow, Error};
 use std::io::{Read, Cursor, SeekFrom};
 use futures::TryStreamExt;
 use std::str::FromStr;
+use std::env;
+use std::envconfig::Envconfig;
 use crate::oracle::backend::{
     get_meta_data, MetaData,
     get_endpoint, Endpoint,
@@ -26,12 +27,21 @@ pub struct OracleQuery {
     pub client: IpfsClient, // The IPFS client to use to retrieve the file.
 }
 
+#[derive(Envconfig)]
+struct OracleQueryConfig {
+    #[envconfig(from = "ENDPOINT_HOST")]
+    pub host: String,
+    #[envconfig(from = "ENDPOINT_PORT")]
+    pub port: u16,
+}
+
 impl OracleQuery {
     // Generate a new OracleQuery.
-    pub fn new(cid: Cid, hash: Hash, size: usize, _host: String, _port: u16) -> Self {
+    pub fn new(cid: Cid, hash: Hash, size: usize) -> Self {
+        let config = OracleQueryConfig::init().unwrap();
         // Initialize our IPFS client from a specified host and port
         let client = IpfsClient::from_host_and_port(
-            http::uri::Scheme::HTTP, &_host, _port
+            http::uri::Scheme::HTTP, config.host, config.port
         ).unwrap();
 
         Self {
@@ -44,7 +54,9 @@ impl OracleQuery {
 
     // Perform the Oracle Query.
     pub async fn perform(&self) -> Result<bool, anyhow::Error> {
-        /* TODO: Determine random offset and length to read from the file */
+        // TODO - Eventually we will be reading the entire slice from on chain
+        // and comparing it to the hash of the file. Most of this will be deprecated
+
         let offset = generate_random_chunk_index(self.size);
         // Retrieve the file from IPFS
         match self.client
@@ -60,7 +72,6 @@ impl OracleQuery {
         {
             Ok(chunk) => {
                 /* TODO: Implement reading the obao as a stream */
-
                 // Read in our obao file from our backend
                 let obao = get_obao_file(&self.cid.to_string()).await?;
                 // Create a new ObaoSlice from the retrieved file and our obao file
@@ -74,11 +85,12 @@ impl OracleQuery {
     }
 }
 
-// Generate a new OracleQuery from our backend based on a deal_id.
-// Construct an Oracle Query based on a deal_id
-// For now, we'll just use the CID of the file as the deal_id
-pub async fn get_oracle_query(deal_id: &str) -> Result<OracleQuery, Error> {
-    println!("Retrieving Query data from deal_id: {}", deal_id);
+// Generate a new OracleQuery from our backend based on a cid.
+// Construct an Oracle Query based on a cid
+// For now this is implemented by reading against an S3 backend.
+// Eventually it will need to read data from our on-chain data.
+pub async fn get_oracle_query(cid: &str) -> Result<OracleQuery, Error> {
+    println!("Retrieving Query data from cid: {}", cid);
     // Read our meta-data from S3
     println!("Retrieving meta-data from S3");
     let meta_data = get_meta_data(deal_id).await?;
@@ -90,17 +102,17 @@ pub async fn get_oracle_query(deal_id: &str) -> Result<OracleQuery, Error> {
     let size = meta_data.size;
     let hash = bao::Hash::from_str(&meta_data.hash)?;
 
-    println!("Retrieving IPFS endpoint from S3");
-    // Read the specified endpoint from S3
-    let endpoint = get_endpoint(deal_id).await?;
-    println!("Host: {}", &endpoint.host);
-    println!("Port: {}", &endpoint.port);
-    // Extract useful fields from the endpoint
-    let host = endpoint.host;
-    let port = endpoint.port;
+    // println!("Retrieving IPFS endpoint from S3");
+    // // Read the specified endpoint from S3
+    // let endpoint = get_endpoint(deal_id).await?;
+    // println!("Host: {}", &endpoint.host);
+    // println!("Port: {}", &endpoint.port);
+    // // Extract useful fields from the endpoint
+    // let host = endpoint.host;
+    // let port = endpoint.port;
 
     // Create a new OracleQuery object
-    let query = OracleQuery::new(cid, hash, size, host, port);
+    let query = OracleQuery::new(cid, hash, size);
     // Return the OracleQuery object
     Ok(query)
 }

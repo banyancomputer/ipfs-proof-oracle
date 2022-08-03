@@ -1,4 +1,3 @@
-/* uses */
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use anyhow::{Result, anyhow, Error};
@@ -7,6 +6,8 @@ use awsregion::Region;
 use awscreds::Credentials;
 use std::io::Cursor;
 use std::io::Read;
+use std::env;
+use envconfig::Envconfig;
 
 #[macro_use]
 use lazy_static::lazy_static;
@@ -35,11 +36,11 @@ pub struct MetaData {
     pub size: usize
 }
 
-#[derive(Deserialize)]
-pub struct Endpoint {
-    pub host: String,
-    pub port: u16
-}
+// #[derive(Deserialize)]
+// pub struct Endpoint {
+//     pub host: String,
+//     pub port: u16
+// }
 
 /// Retrieve the metadata for a file from S3.
 /// # Arguments
@@ -84,26 +85,26 @@ pub async fn get_meta_data(deal_id: &str) -> Result<MetaData, Error> {
 /// use oracle::backend::get_endpoint;
 /// let endpoint = get_endpoint("deal_id").unwrap();
 /// ```
-pub async fn get_endpoint(deal_id: &str) -> Result<Endpoint, Error> {
-    /* TODO: Get around cloning these */
-    // Our AWS region
-    let region = REGION.clone();
-    // Our AWS credentials
-    let credentials = CREDENTIALS.clone();
-
-    // Initialize our S3 bucket
-    let bucket = Bucket::new(ENDPOINT_BUCKET, region, credentials)?;
-    // Retrieve the object from S3
-    let response = bucket.get_object(deal_id).await?;
-    // Read the bytes of the response into a buffer
-    let mut reader = response.bytes();
-    let mut buffer = Vec::new();
-    reader.read_to_end(&mut buffer)?;
-    // Deserialize the buffer into a Endpoint struct
-    let endpoint: Endpoint = serde_json::from_slice(&buffer)?;
-    // Return the Endpoint object
-    Ok(endpoint)
-}
+// pub async fn get_endpoint(deal_id: &str) -> Result<Endpoint, Error> {
+//     /* TODO: Get around cloning these */
+//     // Our AWS region
+//     let region = REGION.clone();
+//     // Our AWS credentials
+//     let credentials = CREDENTIALS.clone();
+//
+//     // Initialize our S3 bucket
+//     let bucket = Bucket::new(ENDPOINT_BUCKET, region, credentials)?;
+//     // Retrieve the object from S3
+//     let response = bucket.get_object(deal_id).await?;
+//     // Read the bytes of the response into a buffer
+//     let mut reader = response.bytes();
+//     let mut buffer = Vec::new();
+//     reader.read_to_end(&mut buffer)?;
+//     // Deserialize the buffer into a Endpoint struct
+//     let endpoint: Endpoint = serde_json::from_slice(&buffer)?;
+//     // Return the Endpoint object
+//     Ok(endpoint)
+// }
 
 /// Retrieve an OBAO file from S3.
 /// # Arguments

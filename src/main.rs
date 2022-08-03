@@ -1,6 +1,3 @@
-#![allow(dead_code, unused)]
-
-/* uses */
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 use futures::TryStreamExt;
@@ -19,7 +16,7 @@ mod oracle;
 #[derive(Deserialize)]
 struct Request {
     /* File meta-data */
-    deal_id: String, // The deal_id of the file to be verified. For now this is the CID of the file.
+    cid: String, // The cid of the file to be verified.
 }
 
 // Our Response Structure from our Oracle Function
@@ -32,10 +29,10 @@ struct Response {
 // Our Handler Function
 async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
     // Get the deal_id from the request
-    let _deal_id = event.payload.deal_id;
+    let _cid = event.payload.cid;
 
     // Construct an Oracle Query from our backend based on the deal_id
-    let query: OracleQuery  = oracle::get_oracle_query(&_deal_id).await?;
+    let query: OracleQuery  = oracle::get_oracle_query(&_cid).await?;
 
     // Declare a variable to hold our response message
     let mut response_msg = String::new();
@@ -91,7 +88,7 @@ mod tests {
         /* Create a dummy request. Use values in tests/test_list.txt */
         let input = serde_json::from_str(
             "{\
-                \"deal_id\": \"bafybeigiysh5xsklm4hailn25bl6ezshkzmtsewo6vbdwjvrpg7lqhz4ae\"\
+                \"cid\": \"bafybeigiysh5xsklm4hailn25bl6ezshkzmtsewo6vbdwjvrpg7lqhz4ae\"\
             }"
         ).expect("failed to parse event");
         let context = lambda_runtime::Context::default();
